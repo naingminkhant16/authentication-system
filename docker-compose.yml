@@ -1,5 +1,17 @@
 services:
-  # 🧠 Backend - NestJS
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - app-network
+    volumes:
+      - redisdata:/data
+    command: [ 'redis-server', '--appendonly', 'yes' ]
+
   backend:
     build:
       context: ./backend
@@ -13,9 +25,11 @@ services:
     networks:
       - app-network
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: redis
+    depends_on:
+      - redis
 
-  # 💻 Frontend - Next.js
   frontend:
     build:
       context: ./frontend
@@ -25,14 +39,15 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Used inside Next.js to call the backend
       NEXT_PUBLIC_API_URL: http://backend:5000
     depends_on:
       - backend
     networks:
       - app-network
 
-# 🔗 Shared network for service communication
+volumes:
+  redisdata:
+
 networks:
   app-network:
     driver: bridge

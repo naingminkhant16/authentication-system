@@ -1,4 +1,4 @@
-import {Controller, Get, HttpCode, HttpStatus} from "@nestjs/common";
+import {Controller, Get, HttpCode, HttpStatus, Query} from "@nestjs/common";
 import {DepartmentService} from "./department.service";
 import {ApiResponse} from "../../common/utils/api.response";
 
@@ -9,8 +9,8 @@ export class DepartmentController {
 
     @Get()
     @HttpCode(HttpStatus.OK)
-    async getAllDepartments() {
-        const departments = await this.departmentService.getAll();
+    async getAllDepartments(@Query('search') search: string) {
+        const departments = await this.departmentService.getAll(search);
         return ApiResponse.success(departments, 'Department List');
     }
 }

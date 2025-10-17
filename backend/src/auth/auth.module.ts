@@ -3,10 +3,12 @@ import {AuthController} from "./auth.controller";
 import {AuthService} from "./auth.service";
 import {HashingService} from "../../common/services/hashing.service";
 import {PrismaService} from "../../prisma/prisma.service";
+import {JwtStrategy} from "./jwt.strategy";
+import {TokenBlacklistService} from "./token-blacklist-service";
 
 @Module({
-    providers: [AuthService, HashingService, PrismaService],
-    controllers: [AuthController]
+    controllers: [AuthController],
+    providers: [AuthService, HashingService, PrismaService, JwtStrategy, TokenBlacklistService],
 })
 export class AuthModule {
 }

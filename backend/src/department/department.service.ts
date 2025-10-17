@@ -6,9 +6,11 @@ export class DepartmentService {
     constructor(private readonly prismaService: PrismaService) {
     }
 
-    async getAll() {
-        const departments = await this.prismaService.department.findMany();
-
-        return departments;
+    async getAll(search: string = '') {
+        return this.prismaService.department.findMany({
+            where: {
+                name: {contains: search},
+            }
+        });
     }
 }
