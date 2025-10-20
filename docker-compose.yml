@@ -1,4 +1,17 @@
 services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: nmk
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: employee_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   redis:
     image: redis:7-alpine
@@ -29,6 +42,7 @@ services:
       REDIS_HOST: redis
     depends_on:
       - redis
+      - db
 
   frontend:
     build:
@@ -39,7 +53,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:5000
+      BACKEND_API_BASE_URL: http://backend:5000
     depends_on:
       - backend
     networks:
@@ -47,6 +61,7 @@ services:
 
 volumes:
   redisdata:
+  pgdata:
 
 networks:
   app-network:

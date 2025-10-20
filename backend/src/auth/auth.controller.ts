@@ -5,7 +5,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    Post,
+    Post, Query,
     Req,
     Res,
     UseGuards
@@ -35,6 +35,7 @@ export class AuthController {
         @Body() loginDto: LoginDto,
         @Res({passthrough: true}) res: Response
     ): Promise<ApiResponse<{ access_token: string }>> {
+
         const {accessToken, refreshToken, auth} = await this.authService.login(loginDto);
 
         this.authService.setRefreshTokenCookie(refreshToken, res);
@@ -56,10 +57,11 @@ export class AuthController {
             {
                 id: employee.id,
                 name: employee.name,
+                email: employee.email,
                 employeeId: employee.employeeId,
                 createdAt: employee.createdAt
             },
-            "New Employee Created Successfully. Use Employee ID to Login.",
+            "New Employee Created Successfully.",
             HttpStatus.CREATED
         );
     }
@@ -70,14 +72,12 @@ export class AuthController {
         @Req() req: Request,
         @Res({passthrough: true}) res: Response,
     ): Promise<ApiResponse<{ access_token: string }>> {
+
         const refresh_token = req.cookies['refresh_token'];
 
-        if (!refresh_token) {
-            throw new BadRequestException('Refresh token not found');
-        }
+        if (!refresh_token) throw new BadRequestException('Refresh token not found');
 
-        const {accessToken, newRefreshToken} =
-            await this.authService.refreshToken(refresh_token);
+        const {accessToken, newRefreshToken} = await this.authService.refreshToken(refresh_token);
 
         this.authService.setRefreshTokenCookie(newRefreshToken, res);
 
@@ -94,6 +94,7 @@ export class AuthController {
         @Req() req: Request,
         @Res({passthrough: true}) res: Response,
     ): Promise<ApiResponse<null>> {
+
         const refresh_token = req.cookies['refresh_token'];
 
         if (!refresh_token) throw new BadRequestException('Refresh token not found');
@@ -101,5 +102,13 @@ export class AuthController {
         await this.authService.logout(refresh_token, res);
 
         return ApiResponse.success(null, 'Logout Successful');
+    }
+
+
+    @Get('/verify-email')
+    @HttpCode(HttpStatus.OK)
+    async verifyMail(@Query('token') token: string): Promise<ApiResponse<null>> {
+        await this.authService.verifyMail(token);
+        return ApiResponse.success(null, 'Email verified successfully');
     }
 }
