@@ -74,12 +74,20 @@ export class AuthService {
     async login(loginDto: LoginDto): Promise<{
         accessToken: string,
         refreshToken: string,
-        auth: { id: number, name: string, email: string, employeeId: string, departmentName: string }
+        auth: {
+            id: number,
+            name: string,
+            email: string,
+            employeeId: string,
+            emailVerified: boolean,
+            departmentId: number,
+            departmentName: string
+        }
     }> {
         // retrieve employee
         const employee = await this.prismaService.employee.findFirst({
             where: {email: loginDto.email},
-            include: {department: {select: {name: true}}}
+            include: {department: {select: {name: true}}},
         });
 
         if (!employee) throw new BadRequestException("Employee not found");
@@ -90,10 +98,20 @@ export class AuthService {
         if (!await this.hashingService.comparePassword(loginDto.password, employee.password))
             throw new BadRequestException("Password do not match");
 
+        const auth = {
+            id: employee.id,
+            name: employee.name,
+            email: employee.email,
+            employeeId: employee.employeeId,
+            emailVerified: employee.emailVerified,
+            departmentId: employee.departmentId,
+            departmentName: employee.department.name
+        };
+
         // Create token payload
         const payload = {
             sub: employee.id,
-            auth: employee,
+            auth,
             system_name: process.env.APP_NAME,
             requested_at: new Date(),
         }
@@ -103,17 +121,7 @@ export class AuthService {
         // Create refresh token
         const refreshToken = this.jwtService.sign(payload, {expiresIn: '24h'});
 
-        return {
-            accessToken,
-            refreshToken,
-            auth: {
-                id: employee.id,
-                name: employee.name,
-                email: employee.email,
-                employeeId: employee.employeeId,
-                departmentName: employee.department.name,
-            }
-        };
+        return {accessToken, refreshToken, auth};
     }
 
     setRefreshTokenCookie(refreshToken: string, res: Response): void {
@@ -144,10 +152,20 @@ export class AuthService {
         });
         if (!employee) throw new NotFoundException('User not found');
 
+        const auth = {
+            id: employee.id,
+            name: employee.name,
+            email: employee.email,
+            employeeId: employee.employeeId,
+            emailVerified: employee.emailVerified,
+            departmentId: employee.departmentId,
+            departmentName: employee.department.name
+        };
+        
         // create new token payload
         const newPayload = {
             sub: employee.id,
-            auth: employee,
+            auth,
             system_name: process.env.APP_NAME,
             requested_at: new Date(),
         };

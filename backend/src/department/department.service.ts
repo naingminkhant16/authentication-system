@@ -13,4 +13,20 @@ export class DepartmentService {
             }
         });
     }
+
+    async getDepartmentEmployeesById(id: number) {
+        return this.prismaService.department.findFirst({
+            where: {id: Number(id)},
+            include: {
+                employees: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        employeeId: true,
+                    }
+                }
+            },
+        });
+    }
 }
