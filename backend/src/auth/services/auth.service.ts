@@ -1,13 +1,15 @@
 import {BadRequestException, Injectable, NotFoundException, UnauthorizedException} from "@nestjs/common";
-import {RegisterDto} from "./dto/register.dto";
-import {PrismaService} from "../../prisma/prisma.service";
+import {RegisterDto} from "../dtos/register.dto";
+import {PrismaService} from "../../../prisma/prisma.service";
 import {Employee} from "@prisma/client";
-import {HashingService} from "../../common/services/hashing.service";
-import {LoginDto} from "./dto/login.dto";
+import {HashingService} from "../../../common/services/hashing.service";
+import {LoginDto} from "../dtos/login.dto";
 import {JwtService} from "@nestjs/jwt";
 import {Response} from 'express';
 import {TokenBlacklistService} from "./token-blacklist-service";
-import {MailService} from "../../common/services/mail/mail.service";
+import {MailService} from "../../../common/services/mail/mail.service";
+import {RedisService} from "../../../common/services/redis.service";
+import Redis from "ioredis";
 
 @Injectable()
 export class AuthService {
@@ -17,6 +19,7 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly tokenBlacklistService: TokenBlacklistService,
         private readonly mailService: MailService,
+        private readonly redisService: RedisService,
     ) {
     }
 
@@ -161,7 +164,7 @@ export class AuthService {
             departmentId: employee.departmentId,
             departmentName: employee.department.name
         };
-        
+
         // create new token payload
         const newPayload = {
             sub: employee.id,
@@ -213,5 +216,75 @@ export class AuthService {
             where: {id: payload.sub},
             data: {emailVerified: true}
         });
+    }
+
+    async OAuthSignIn(name: string, email: string, departmentId: number): Promise<{
+        accessToken: string,
+        refreshToken: string,
+        auth: {
+            id: number,
+            name: string,
+            email: string,
+            employeeId: string,
+            emailVerified: boolean,
+            departmentId: number,
+            departmentName: string
+        }
+    }> {
+        // check email exists
+        let employee = await this.prismaService.employee.findFirst({
+            where: {email},
+            select: {id: true, name: true, email: true}
+        });
+
+        // if not exists, create with oauth email
+        if (!employee && departmentId) {
+            console.log("Creating new employee from Google OAuth : email - " + email);
+            const employeeId = "E" + (Math.floor(Date.now() / 1000) % 10000).toString();
+            const newEmployee = await this.prismaService.employee.create({
+                data: {
+                    name,
+                    email,
+                    emailVerified: true,
+                    departmentId,
+                    password: await this.hashingService.hashPassword(email),
+                    employeeId,
+                }
+            })
+            email = newEmployee.email;
+        }
+
+        return this.login({email: email, password: email});
+    }
+
+    async requestOTP(email: string, password: string): Promise<void> {
+        const employee = await this.prismaService.employee.findFirst({
+            where: {email},
+            select: {id: true, email: true, password: true}
+        });
+
+        if (!employee) throw new BadRequestException('Invalid email');
+        // compare passwords
+        if (!await this.hashingService.comparePassword(password, employee.password))
+            throw new BadRequestException("Password do not match");
+
+        // generate OTP
+        const OTP_CODE: string = this.generateOTP();
+
+        // Store the token in Redis with an expiry matching its lifetime
+        await this.redisService.getClient().set(`${email}`, OTP_CODE, 'EX', 60);
+
+        // Send OTP to email
+        await this.mailService.sendOTP(email, OTP_CODE);
+    }
+
+    async verifyOTP(email: string, code: string): Promise<boolean> {
+        const valid: boolean = code == await this.redisService.getClient().get(email);
+        this.redisService.getClient().del(email);
+        return valid;
+    }
+
+    private generateOTP(): string {
+        return (Math.floor(Math.random() * 9000) + 1000).toString();
     }
 }

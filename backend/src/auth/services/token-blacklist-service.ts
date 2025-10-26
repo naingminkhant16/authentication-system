@@ -1,7 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import Redis from 'ioredis';
-import {RedisService} from "../../common/services/redis.service";
-
+import {RedisService} from "../../../common/services/redis.service";
 
 @Injectable()
 export class TokenBlacklistService {

@@ -1,11 +1,13 @@
 import {Module} from "@nestjs/common";
 import {AuthController} from "./auth.controller";
-import {AuthService} from "./auth.service";
+import {AuthService} from "./services/auth.service";
 import {HashingService} from "../../common/services/hashing.service";
 import {PrismaService} from "../../prisma/prisma.service";
-import {JwtStrategy} from "./jwt.strategy";
-import {TokenBlacklistService} from "./token-blacklist-service";
+import {JwtStrategy} from "./strategies/jwt.strategy";
+import {TokenBlacklistService} from "./services/token-blacklist-service";
 import {MailService} from "../../common/services/mail/mail.service";
+import {GoogleOauthGuard} from "./guards/google-oauth.guard";
+import {GoogleStrategy} from "./strategies/google.strategy";
 
 @Module({
     controllers: [AuthController],
@@ -15,7 +17,9 @@ import {MailService} from "../../common/services/mail/mail.service";
         PrismaService,
         JwtStrategy,
         TokenBlacklistService,
-        MailService
+        MailService,
+        GoogleOauthGuard,
+        GoogleStrategy
     ],
 })
 export class AuthModule {

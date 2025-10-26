@@ -25,11 +25,11 @@ export default function DashboardPage() {
 
     // Fetch user and departments
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-            router.push("/login");
-            return;
-        }
+        // const token = localStorage.getItem("access_token");
+        // if (!token) {
+        //     router.push("/login");
+        //     return;
+        // }
 
         async function loadData() {
             try {

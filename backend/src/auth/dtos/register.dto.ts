@@ -1,4 +1,4 @@
-import {IsEmail, IsNotEmpty, MaxLength, MinLength} from "class-validator";
+import {IsEmail, IsNotEmpty, IsString, MaxLength, MinLength} from "class-validator";
 
 export class RegisterDto {
     @IsNotEmpty()
@@ -19,4 +19,7 @@ export class RegisterDto {
 
     @IsNotEmpty()
     departmentId: number;
+    
+    @IsString()
+    recaptchaToken?: string;
 }

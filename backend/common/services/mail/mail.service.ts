@@ -37,21 +37,21 @@ export class MailService {
         }
     }
 
-    async sendResetPasswordCode(email: string, code: string): Promise<void> {
+    async sendOTP(email: string, code: string): Promise<void> {
         const mailOptions = {
             from: process.env.MAIL_FROM,
             to: email,
-            subject: 'Password Reset Code',
-            text: `This is the reset password code for ${email}`,
+            subject: 'OTP for Login',
+            text: `This is the OTP code for ${email} to login.`,
             html: `<b>${code}</b>`,
         };
 
         try {
             this.transporter.sendMail(mailOptions);
         } catch (error) {
-            console.error('Error sending reset password email:', error);
+            console.error('Error sending OTP :', error);
             throw new InternalServerErrorException(
-                'Error sending reset password email',
+                'Error sending OTP',
             );
         }
     }
