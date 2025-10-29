@@ -21,7 +21,6 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy only what’s necessary for runtime
 COPY package*.json ./
 
 # Install only production dependencies
@@ -31,11 +30,12 @@ RUN npm install --only=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
+# Generate prisma models
 RUN npx prisma generate
+
 # Expose backend port
 EXPOSE 5000
 
 # Start the application
-#CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
 CMD ["node", "dist/src/main.js"]
 

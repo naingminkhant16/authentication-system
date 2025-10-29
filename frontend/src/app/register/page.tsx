@@ -13,6 +13,9 @@ interface Department {
 export default function RegisterPage() {
     const router = useRouter();
     const [departments, setDepartments] = useState<Department[]>([]);
+    const [showPassword, setShowPassword] = useState(false);
+    const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -38,9 +41,25 @@ export default function RegisterPage() {
             .catch(() => setError("Failed to load departments"));
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+
+    const validatePassword = (password: string) => {
+        const errors: string[] = [];
+        if (password.length < 8) errors.push("At least 8 characters");
+        if (!/[a-z]/.test(password)) errors.push("At least one lowercase letter");
+        if (!/[A-Z]/.test(password)) errors.push("At least one uppercase letter");
+        if (!/[0-9]/.test(password)) errors.push("At least one number");
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password))
+            errors.push("At least one special character");
+        setPasswordErrors(errors);
+    };
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
         const {name, value} = e.target;
         setForm((prev) => ({...prev, [name]: value}));
+
+        if (name === "password") validatePassword(value);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,9 +72,13 @@ export default function RegisterPage() {
             return;
         }
 
-
         if (form.password !== form.confirmPassword) {
             setError("Passwords do not match");
+            return;
+        }
+
+        if (passwordErrors.length > 0) {
+            setError("Password does not meet the required criteria");
             return;
         }
 
@@ -67,36 +90,38 @@ export default function RegisterPage() {
                 password: form.password,
                 confirmPassword: form.confirmPassword,
                 departmentId: parseInt(form.departmentId),
-                recaptchaToken
+                recaptchaToken,
             });
 
-            setSuccessMessage("Successfully registered and Verify mail is sent.");
+            setSuccessMessage("Successfully registered and verification mail sent.");
         } catch (err: any) {
             setError(err.response?.data?.message || "Registration failed");
         } finally {
             setLoading(false);
         }
     };
+
     const handleGoogleSignUp = async () => {
         if (form.departmentId == "") {
             setError("Please select a department to register with Google");
             return;
         }
-        window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL}/api/auth/google?departmentId=` + form.departmentId;
-    }
+        window.location.href =
+            `${process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL}/api/auth/google?departmentId=` +
+            form.departmentId;
+    };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
             <div className="bg-white p-8 rounded-2xl shadow-md w-96">
-
-                <form
-                    onSubmit={handleSubmit}
-
-                >
+                <form onSubmit={handleSubmit}>
                     <h1 className="text-2xl font-semibold text-center mb-6">
                         Employee Registration
                     </h1>
-                    {successMessage
-                        && (<p className={"text-green-400 text-center mb-4"}>{successMessage}</p>)}
+
+                    {successMessage && (
+                        <p className="text-green-500 text-center mb-4">{successMessage}</p>
+                    )}
 
                     {error && (
                         <p className="text-red-500 text-center text-sm mb-4">{error}</p>
@@ -127,18 +152,57 @@ export default function RegisterPage() {
                         />
                     </div>
 
+
                     <div className="mb-4">
                         <label className="block text-sm font-medium mb-1">Password</label>
                         <input
                             name="password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             value={form.password}
                             onChange={handleChange}
                             required
                             className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:ring-blue-200"
                             placeholder="********"
                         />
+
+
+                        {form.password && (
+                            <ul className="text-xs mt-2 space-y-1">
+                                {[
+                                    "At least 8 characters",
+                                    "At least one lowercase letter",
+                                    "At least one uppercase letter",
+                                    "At least one number",
+                                    "At least one special character",
+                                ].map((req, i) => (
+                                    <li
+                                        key={i}
+                                        className={
+                                            passwordErrors.includes(req)
+                                                ? "text-red-500"
+                                                : "text-green-500"
+                                        }
+                                    >
+                                        {passwordErrors.includes(req) ? "✗" : "✓"} {req}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <div className="flex items-center mt-2">
+                            <input
+                                type="checkbox"
+                                id="showPassword"
+                                checked={showPassword}
+                                onChange={() => setShowPassword((prev) => !prev)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="showPassword" className="text-sm">
+                                Show Password
+                            </label>
+                        </div>
                     </div>
+
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium mb-1">
@@ -146,7 +210,7 @@ export default function RegisterPage() {
                         </label>
                         <input
                             name="confirmPassword"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             value={form.confirmPassword}
                             onChange={handleChange}
                             required
@@ -172,12 +236,14 @@ export default function RegisterPage() {
                             ))}
                         </select>
                     </div>
+
                     <div className="mb-4 flex justify-center">
                         <ReCAPTCHA
                             sitekey={process.env.NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY!}
                             onChange={(token: any) => setRecaptchaToken(token)}
                         />
                     </div>
+
                     <button
                         type="submit"
                         disabled={loading}
@@ -186,6 +252,7 @@ export default function RegisterPage() {
                         {loading ? "Registering..." : "Register"}
                     </button>
                 </form>
+
                 <button
                     onClick={handleGoogleSignUp}
                     disabled={loading}
@@ -202,8 +269,9 @@ export default function RegisterPage() {
                         <path fill="#1976D2"
                               d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
                     </svg>
-                    <span className={'ml-1.5'}>Sign Up With Google</span>
+                    <span className="ml-1.5">Sign Up With Google</span>
                 </button>
+
                 <p className="text-sm text-center mt-4">
                     Already have an account?{" "}
                     <a href="/login" className="text-blue-600 hover:underline">

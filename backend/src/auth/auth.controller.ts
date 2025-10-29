@@ -15,7 +15,7 @@ import {AuthService} from "./services/auth.service";
 import {LoginDto} from "./dtos/login.dto";
 import {RegisterDto} from "./dtos/register.dto";
 import {Employee} from "@prisma/client";
-import {ApiResponse} from "../../common/utils/api.response";
+import {ApiResponse} from "../common/utils/api.response";
 import {Request, Response} from "express";
 import {AuthGuard} from "@nestjs/passport";
 import {GoogleOauthGuard} from "./guards/google-oauth.guard";

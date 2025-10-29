@@ -29,7 +29,7 @@ export default function OtpPage() {
             if (res.status === 200) {
                 const loginRes = await api.post("/api/auth/login", {
                     email,
-                    password,
+                    password: atob(password),
                     recaptchaToken,
                 });
 

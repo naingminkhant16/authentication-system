@@ -20,7 +20,6 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-
         // If token expired (401) and not retried yet
         if (
             error.response?.status === 401 &&
@@ -29,21 +28,16 @@ api.interceptors.response.use(
         ) {
             originalRequest._retry = true;
             isRefreshing = true;
-
             try {
                 // Try to get a new access token
                 const refreshRes = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/refresh-token`,
-                    {},
+                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/refresh-token`, {},
                     {withCredentials: true}
                 );
-
                 const newToken = refreshRes.data.data.access_token;
                 localStorage.setItem("access_token", newToken);
-
                 // Update the Authorization header and retry the original request
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
                 isRefreshing = false;
                 return api(originalRequest);
             } catch (refreshError) {
@@ -57,5 +51,4 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
 export default api;

@@ -2,14 +2,13 @@ import {BadRequestException, Injectable, NotFoundException, UnauthorizedExceptio
 import {RegisterDto} from "../dtos/register.dto";
 import {PrismaService} from "../../../prisma/prisma.service";
 import {Employee} from "@prisma/client";
-import {HashingService} from "../../../common/services/hashing.service";
+import {HashingService} from "../../common/services/hashing.service";
 import {LoginDto} from "../dtos/login.dto";
 import {JwtService} from "@nestjs/jwt";
 import {Response} from 'express';
 import {TokenBlacklistService} from "./token-blacklist-service";
-import {MailService} from "../../../common/services/mail/mail.service";
-import {RedisService} from "../../../common/services/redis.service";
-import Redis from "ioredis";
+import {MailService} from "../../common/services/mail/mail.service";
+import {RedisService} from "../../common/services/redis.service";
 
 @Injectable()
 export class AuthService {
@@ -271,8 +270,8 @@ export class AuthService {
         // generate OTP
         const OTP_CODE: string = this.generateOTP();
 
-        // Store the token in Redis with an expiry matching its lifetime
-        await this.redisService.getClient().set(`${email}`, OTP_CODE, 'EX', 60);
+        // Store the token in Redis
+        await this.redisService.getClient().set(`${email}`, OTP_CODE, 'EX', 180);
 
         // Send OTP to email
         await this.mailService.sendOTP(email, OTP_CODE);

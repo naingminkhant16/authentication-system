@@ -1,6 +1,6 @@
 import {Controller, ForbiddenException, Get, HttpCode, HttpStatus, Param, Query, Req, UseGuards} from "@nestjs/common";
 import {DepartmentService} from "./department.service";
-import {ApiResponse} from "../../common/utils/api.response";
+import {ApiResponse} from "../common/utils/api.response";
 import {AuthGuard} from "@nestjs/passport";
 import {Request} from "express";
 

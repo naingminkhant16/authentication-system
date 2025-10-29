@@ -12,6 +12,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
@@ -37,7 +38,7 @@ export default function LoginPage() {
             if (res.status === 200) {
                 localStorage.setItem('login_info', JSON.stringify({
                     email,
-                    password,
+                    password: btoa(password),
                     recaptchaToken,
                 }));
 
@@ -76,12 +77,24 @@ export default function LoginPage() {
                     <div className="mb-6">
                         <label className="block text-sm font-medium mb-1">Password</label>
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:ring-blue-200"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
+                        <div className="flex items-center mt-2">
+                            <input
+                                type="checkbox"
+                                id="showPassword"
+                                checked={showPassword}
+                                onChange={() => setShowPassword((prev) => !prev)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="showPassword" className="text-sm">
+                                Show Password
+                            </label>
+                        </div>
                     </div>
 
 
